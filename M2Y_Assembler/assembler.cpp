@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <bitset>
+#include <iomanip>
 
 #define DATA_MEMORY_START (uint32_t) 0x00000000
 #define INSTRUCTION_MEMORY_START (uint32_t) 0x00000000
@@ -587,6 +588,7 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
         bool instruction_detected = false;
         int required_register_number = NULL;
         int l = 0;
+        string temp_token;
         //Take first token and find the matched instruction   
         iss >> token;
         for (int i = 0; i < inst_count; i++){
@@ -595,9 +597,9 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
                 instruction_detected = true;
                 //Take the insturction opcode convert it to bit as a string and push back to assembled line
                 assembled_line.push_back(bitset<7>(inst[i].opcode).to_string());
- 
+                
                 for (int j = 0; j< 4 ; j++) { 
-
+                //Detect how many registers used in instruction
                     if ( !(strcmp(inst[i].type, i_details[j].type)) ) {
                         required_register_number = i_details[j].expected_register;
                     }
@@ -612,10 +614,28 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
                     exit(1);
                 }
 
-                
+                /*  
+                * 
+                */
+
                 for (int k = 0; k < required_register_number; k++)
                 {
+                    //Insert registers
+                    // Detect rd,Imm17(rs) instruction type
                     iss >> token;
+                    size_t l_paranthesis = token.find('(');
+                    if (l_paranthesis != string::npos) {
+                        if (token.find(')') == string::npos) {
+                            cerr << "Error: Missing paranthesis ')' ! Check line [" << number_line << "]" << endl;
+                            inputFile.close();
+                            outputFile.close();
+                            exit(1);
+                        }
+                        temp_token = token;
+                        token = token.substr(l_paranthesis + 1, token.find(')') - l_paranthesis - 1);
+                    }
+
+
                     bool register_found = false;
                     while (l < 32) {
                         if ( ! token.compare(registers[l]) ) {
@@ -633,50 +653,58 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
                     }
                 }
 
+                size_t l_paranthesis = line.find('(');
+                if (l_paranthesis != string::npos) {
+                    token = temp_token;
+                    token = token.substr(0, token.find('('));
+                }
+                else {
+                    iss >> token;
+                }
+
                 switch (required_register_number)
                 {
+                //Insert Imm17-22
                     case 2:
-                        iss >> token;
                         if (token.find("0x") != string::npos) {
                             string hex_imm17_str;
                             hex_imm17_str = token;
                             int32_t hex_imm17_int = stoi(hex_imm17_str, nullptr, 16);
-                            assembled_line.push_back(bitset<17>(hex_imm17_int).to_string());
+                            assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
                         }
                         else if (line.find("0b") != string::npos) {
                             string hex_imm17_str;
                             hex_imm17_str = token;
                             hex_imm17_str.erase(0, 2);
                             int32_t hex_imm17_int = stoi(hex_imm17_str, nullptr, 2);
-                            assembled_line.push_back(bitset<17>(hex_imm17_int).to_string());
+                            assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
                         }
                         else {
                             string hex_imm17_str;
                             hex_imm17_str = token;
                             int32_t hex_imm17_int = stoi(hex_imm17_str);
-                            assembled_line.push_back(bitset<17>(hex_imm17_int).to_string());
+                            assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
                         }
                         break;
                     case 1:
-                        iss >> token;
                         if (token.find("0x") != string::npos) {
                             string hex_imm22_str;
                             hex_imm22_str = token;
                             int32_t hex_imm22_int = stoi(hex_imm22_str, nullptr, 16);
-                            assembled_line.push_back(bitset<22>(hex_imm22_int).to_string());
+                            assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
                         }
                         else if (line.find("0b") != string::npos) {
                             string hex_imm22_str;
                             hex_imm22_str = token;
                             hex_imm22_str.erase(0, 2);
                             int32_t hex_imm22_int = stoi(hex_imm22_str, nullptr, 2);
-                            assembled_line.push_back(bitset<22>(hex_imm22_int).to_string());
+                            assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
                         }
                         else {
                             string hex_imm22_str;
                             hex_imm22_str = token;
                             int32_t hex_imm22_int = stoi(hex_imm22_str);
-                            assembled_line.push_back(bitset<22>(hex_imm22_int).to_string());
+                            assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
                         }
                         break;
                 default:
@@ -709,6 +737,57 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
     outputFile.close();
 }
 
+void bixtohex(const std::string& inputFilename, const std::string& outputFilename) {
+    ifstream inputFile(inputFilename);
+    ofstream outputFile(outputFilename);
+
+    if (!inputFile.is_open()) {
+        cerr << "Error: Unable to open input file: " << inputFilename << endl;
+        return;
+    }
+
+    if (!outputFile.is_open()) {
+        cerr << "Error: Unable to open output file: " << outputFilename << endl;
+        return;
+    }
+
+    string line;
+    string hexString;
+    string eightBitChunk;
+    stringstream hexStream;
+    while (getline(inputFile, line)) {
+       line.erase(std::remove_if(line.begin(), line.end(), ::isspace), line.end());
+
+       if (line.length() % 8 != 0) {
+           cerr << "Error: Binary string length must be a multiple of 8." << endl;
+           exit(1);
+       }
+       
+       for (size_t i = 0; i < line.length(); i += 8) {
+           eightBitChunk = line.substr(i, 8);
+
+           // Convert 8-bit chunk to an integer
+           bitset<8> bits(eightBitChunk);
+           unsigned long hexValue = bits.to_ulong();
+
+           // Convert integer to hex string
+           hexStream << hex << std::setw(2) << std::setfill('0') << hexValue;
+           // Append the hex string to the result with a space
+           hexString += hexStream.str() + " ";
+           hexStream.str("");
+           hexStream.clear();
+       }
+       hexString.pop_back();
+       outputFile << hexString << endl;
+       hexString = "";
+       hexString.clear();
+    }
+
+    inputFile.close();
+    outputFile.close();
+}
+
+
 void do_assembly(const string& inputFilename, const string& outputFilename) {
 
     string temp = "debug";
@@ -735,4 +814,9 @@ void do_assembly(const string& inputFilename, const string& outputFilename) {
     assemble_line(outputFilename, temp);
     remove(outputFilename.c_str());
     rename(temp.c_str(), outputFilename.c_str());
+    
+    bixtohex(outputFilename, temp);
+    remove(outputFilename.c_str());
+    rename(temp.c_str(), outputFilename.c_str());
+    
 }

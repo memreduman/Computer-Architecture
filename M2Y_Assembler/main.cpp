@@ -40,6 +40,8 @@ int main()
 
 
     do_assembly(inputFilename, outputFilename);
+    cout << "Success !" << endl;
+    cout << inputFilename << " file is successfully converted to object file as " << outputFilename << "!" << endl;
 
    /*
    for (uint32_t i = 0; i < datasection_index; i++) {

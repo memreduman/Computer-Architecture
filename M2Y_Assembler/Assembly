@@ -1,26 +1,2 @@
-/*	Assembly Code Example */
-/*
-	Emre Duman
-	
-*/
-// Emre single line
-
-.data
-.word 10
-.word 5
-
-.text
-
-start:
-add	x1,x2, x3 // x1=x2+x3
-bne x1,x2,start
-sub x1, x2,x3 // Emre
-or	x1,x2,x5
-mul x1,x2,x3
-jal x0, start
-end:
-jal x0, end
-
-/*
-end of the file
-*/
+addi x1,x0,1
+lw x1,4(x0)
