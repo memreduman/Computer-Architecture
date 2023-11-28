@@ -513,16 +513,18 @@ void insert_labels_addresses(const string& inputFilename, const string& outputFi
                     //string temp_address = to_string(label_list[i].address);
                     int relative_address=0;
                     if (label_list[i].address > pc_count) {
-                        relative_address = (int)((pc_count+4) - label_list[i].address) / 4;
+                        relative_address = (int)(label_list[i].address - (pc_count + 4)) / 4;
+                        //cout << relative_address << "\n" << label_list[i].address << "\n" << pc_count << endl;
                     }
                     else if(label_list[i].address < pc_count){
                         relative_address = (int)(label_list[i].address - (pc_count+4)) / 4;
+                        //cout << relative_address << "\n" << label_list[i].address << "\n" << pc_count << endl;
                     }
                     else {
                         relative_address = 0;
                     }
-
                     string temp_address = to_string(relative_address);
+                    //cout << temp_address << "\n"<< label_list[i].address << "\n" << pc_count << endl;
                     token = temp_address;
                 }
             }
@@ -596,8 +598,8 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
             if (!token.compare(inst[i].name)) {
                 instruction_detected = true;
                 //Take the insturction opcode convert it to bit as a string and push back to assembled line
-                assembled_line.push_back(bitset<7>(inst[i].opcode).to_string());
-                
+                //assembled_line.push_back(bitset<7>(inst[i].opcode).to_string());
+                assembled_line.insert(assembled_line.begin(), bitset<7>(inst[i].opcode).to_string());
                 for (int j = 0; j< 4 ; j++) { 
                 //Detect how many registers used in instruction
                     if ( !(strcmp(inst[i].type, i_details[j].type)) ) {
@@ -639,7 +641,8 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
                     bool register_found = false;
                     while (l < 32) {
                         if ( ! token.compare(registers[l]) ) {
-                            assembled_line.push_back(bitset<5>(l).to_string());
+                            //assembled_line.push_back(bitset<5>(l).to_string());
+                            assembled_line.insert(assembled_line.begin(), bitset<5>(l).to_string());
                             register_found = true;
                         }
                         l++;
@@ -670,20 +673,26 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
                             string hex_imm17_str;
                             hex_imm17_str = token;
                             int32_t hex_imm17_int = stoi(hex_imm17_str, nullptr, 16);
-                            assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
+                            //assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
+                            assembled_line.insert(assembled_line.begin(), bitset<15>(hex_imm17_int).to_string());
+
                         }
                         else if (line.find("0b") != string::npos) {
                             string hex_imm17_str;
                             hex_imm17_str = token;
                             hex_imm17_str.erase(0, 2);
                             int32_t hex_imm17_int = stoi(hex_imm17_str, nullptr, 2);
-                            assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
+                            //assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
+                            assembled_line.insert(assembled_line.begin(), bitset<15>(hex_imm17_int).to_string());
+
                         }
                         else {
                             string hex_imm17_str;
                             hex_imm17_str = token;
                             int32_t hex_imm17_int = stoi(hex_imm17_str);
-                            assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
+                            //assembled_line.push_back(bitset<15>(hex_imm17_int).to_string());
+                            assembled_line.insert(assembled_line.begin(), bitset<15>(hex_imm17_int).to_string());
+
                         }
                         break;
                     case 1:
@@ -691,20 +700,26 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
                             string hex_imm22_str;
                             hex_imm22_str = token;
                             int32_t hex_imm22_int = stoi(hex_imm22_str, nullptr, 16);
-                            assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
+                            //assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
+                            assembled_line.insert(assembled_line.begin(), bitset<20>(hex_imm22_int).to_string());
+
                         }
                         else if (line.find("0b") != string::npos) {
                             string hex_imm22_str;
                             hex_imm22_str = token;
                             hex_imm22_str.erase(0, 2);
                             int32_t hex_imm22_int = stoi(hex_imm22_str, nullptr, 2);
-                            assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
+                            //assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
+                            assembled_line.insert(assembled_line.begin(), bitset<20>(hex_imm22_int).to_string());
+
                         }
                         else {
                             string hex_imm22_str;
                             hex_imm22_str = token;
                             int32_t hex_imm22_int = stoi(hex_imm22_str);
-                            assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
+                            //assembled_line.push_back(bitset<20>(hex_imm22_int).to_string());
+                            assembled_line.insert(assembled_line.begin(), bitset<20>(hex_imm22_int).to_string());
+
                         }
                         break;
                 default:
@@ -714,7 +729,9 @@ void assemble_line(const std::string& inputFilename, const std::string& outputFi
                 //If the instruction on the line have function code, assemble it as well
                 if (inst[i].funct != -1 )
                 {
-                    assembled_line.push_back(bitset<12>(inst[i].funct).to_string());
+                    //assembled_line.push_back(bitset<12>(inst[i].funct).to_string());
+                    assembled_line.insert(assembled_line.begin(), bitset<10>(inst[i].funct).to_string());
+
                 }
 
                 for (const auto& token : assembled_line) {
@@ -810,7 +827,7 @@ void do_assembly(const string& inputFilename, const string& outputFilename) {
     insert_labels_addresses(outputFilename, temp);
     remove(outputFilename.c_str());
     rename(temp.c_str(), outputFilename.c_str());
-    
+
     assemble_line(outputFilename, temp);
     remove(outputFilename.c_str());
     rename(temp.c_str(), outputFilename.c_str());
