@@ -1,5 +1,5 @@
 /*
-    M2Y-ISA Assembler written by Emre Duman
+    M2Y-ISA Assembler developed by Emre Duman
     2023
 
     It can be used freely
