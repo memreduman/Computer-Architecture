@@ -195,6 +195,7 @@ module datapath(input logic clock, reset, MemRead,
 /////////////////// 2-bit Branch Prediction /////////////////////////////
 	logic Branch_Predicted;
 	logic Branch_Prediction_Miss = 0;
+	logic Branch_PC_Miss = 0;
 	logic [32:0] Branch_Target_Buffer[7:0] = '{default: 33'b0};
 	logic [31:0] BTB_Address;
 	logic [1:0] Branch_Prediction_Buffer[7:0] = '{default: 2'b0};
@@ -202,66 +203,79 @@ module datapath(input logic clock, reset, MemRead,
 	// 01 weakly not taken
 	// 10 weakly taken
 	// 11 strongly taken
-	always@(posedge Branch) begin
+	always@(negedge clock) begin
 		if(reset) ;
 		if(Branch) begin 
-			if(!Branch_Target_Buffer[IfId.PCincremented[9:2]-1][32]) begin
-				Branch_Target_Buffer[IfId.PCincremented[9:2]-1] <= {1'b1,TargetAddress};
+			if(!Branch_Target_Buffer[IfId.PCincremented[4:2]-1][32]) begin						// Branch is seen first time, save target adress and set prediction buffer accordingly
+				Branch_Target_Buffer[IfId.PCincremented[4:2]-1] <= {1'b1,TargetAddress};
 				if(condition_true)
-				Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b11;
+				Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b11;
 				else
-				Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b00;
+				Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b00;
 			end
-			else begin
-				Branch_Target_Buffer[IfId.PCincremented[9:2]-1] <= {1'b1,TargetAddress};
-				
-				case(Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1])
+			else if(Branch_Target_Buffer[IfId.PCincremented[4:2]-1][31:0] != TargetAddress)begin // Check if calculated TargetAddress equals to Predicted Address ?
+				Branch_Prediction_Miss <= 1'b1;
+				if(condition_true)
+				Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b11;
+				else
+				Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b00;
+			end
+			else begin																			// Prediction buffer states
+				//Branch_Target_Buffer[IfId.PCincremented[9:2]-1] <= {1'b1,TargetAddress};
+				case(Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1])
 					2'b00: begin // 00 strongly not taken
 						if(condition_true) begin
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b01; //Branch is taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b01; //Branch is taken
 							Branch_Prediction_Miss <= 1'b1;
+							
 						end
 						else if(!condition_true)begin 
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b00; //Branch is NOT taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b00; //Branch is NOT taken
 							Branch_Prediction_Miss <= 1'b0;
 						end
 					end
 					2'b01: begin // 01 weakly not taken
 						if(condition_true) begin 
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b10; //Branch is taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b10; //Branch is taken
 							Branch_Prediction_Miss <= 1'b1;
 						end
 						else if(!condition_true) begin
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b00; //Branch is NOT taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b00; //Branch is NOT taken
 							Branch_Prediction_Miss <= 1'b0;
 						end
 					end
 					2'b10: begin // 10 weakly taken
 						if(condition_true)begin
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b11; //Branch is taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b11; //Branch is taken
 							Branch_Prediction_Miss <= 1'b0;
 						end
 						else if(!condition_true) begin
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b01; //Branch is NOT taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b01; //Branch is NOT taken
 							Branch_Prediction_Miss <= 1'b1;
 						end
 					end
 					2'b11: begin // 11 strongly taken
 						if(condition_true) begin
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b11; //Branch is taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b11; //Branch is taken
 							Branch_Prediction_Miss <= 1'b0;				
 						end
 						else if(!condition_true) begin
-							Branch_Prediction_Buffer[IfId.PCincremented[9:2]-1] <= 2'b10; //Branch is NOT taken
+							Branch_Prediction_Buffer[IfId.PCincremented[4:2]-1] <= 2'b10; //Branch is NOT taken
 							Branch_Prediction_Miss <= 1'b1;	
 						end
 					end
 				endcase
 			end
 		end
-		else begin
-			Branch_Target_Buffer[IfId.PCincremented[9:2]-1] <= {1'b0,32'b0};
+		else if(!Branch && IfId.Branch_Predicted) begin // No branch instruction, but BTH found entry and did prediction
+			Branch_Target_Buffer[IfId.PCincremented[4:2]-1] <= {1'b0,32'b0}; // Clear prediction
 			Branch_Prediction_Miss <= 1'b0;	
+			Branch_PC_Miss <= 1'b1;
+		end
+		else begin
+			Branch_Target_Buffer[IfId.PCincremented[4:2]-1] <= {1'b0,32'b0};
+			Branch_Prediction_Miss <= 1'b0;	
+			Branch_PC_Miss <= 1'b0;
 		end
 	end
 	
@@ -355,7 +369,11 @@ module datapath(input logic clock, reset, MemRead,
 			flush = 1;
 			PCSrc = 2'b10;
 		end
-		else if( Branch_Predicted ) begin // Prediction : Taken, but has to be NOT Taken
+		else if(Branch_PC_Miss)begin // Non-Branch PC address is found ! Flush and Go PC incremented
+			flush = 1;
+			PCSrc = 2'b10;	
+		end
+		else if( Branch_Predicted ) begin // Do prediction
 			flush = 0;
 			PCSrc = 2'b11;
 		end
