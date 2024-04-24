@@ -22,7 +22,7 @@ instruction is a branch and checking the prediction bit.
 </p>
 <img style="margin-right: 1.5rem" align="left" height="auto" width="600" alt="Branch_Target_Buffer_Flow" src="https://github.com/memreduman/Computer-Architecture/assets/60675917/c33609e1-225c-4b96-b902-869a484dbd48">
 <p align="justify">
-Prediction bit may predict incorrectly (may be a wrong prediction for this branch
+Prediction bit may predict incorrectly (maybe a wrong prediction for this branch
 this iteration or may be from a different branch with the same low order PC
 bits) but this doesn’t affect correctness, just performance.
 <br>If the prediction is wrong, flush the incorrect instruction(s) in pipeline, restart the
@@ -38,3 +38,9 @@ An assembly program to verify the functionality and performance of the CPU.
 
 The code on the left-hand side is provided as IAXPY_assembly. The assembly code is converted to object code by using [M2Y Assembler](https://github.com/memreduman/Computer-Architecture/tree/main/M2Y_Assembler#m2y_assembler)
 <h3>Result:</h3>
+<img style="margin-right: 1.5rem" align="left" height="auto" width="600" alt="Branch_Target_Buffer_Flow" src="https://github.com/memreduman/Computer-Architecture/assets/60675917/c3102d36-4586-486d-b132-05916dfbbf96">
+
+<p align="justify">
+The same test bench is used to verify and test the design. The statistics show that the design made 89 predictions and it missed 25(17+8) of 89. The design did 34 flushes, so there are 34 clock cycles penalty where the previous design<a href="https://github.com/memreduman/Computer-Architecture/blob/08cca9a5fc7116641aa892e4b0aca8df11eb1dc3/Pipeline_Hazard_NoMemory/Readme.md">(Pipeline No Prediction)</a> had 72 flush operation. Therefore, it can be said that the performance of the CPU is increased by saving 38 clock cycles. The testbench has a relatively low for-loop iteration count, so the saved clock cycles could be increased.
+
+</p>
