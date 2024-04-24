@@ -8,7 +8,7 @@ It is developed an assembler for M2Y Instruction Set written in C++. The program
 ### 2. [Pipeline + Hazard](https://github.com/memreduman/Computer-Architecture/tree/main/Pipeline_Hazard_NoMemory)
 This folder describes the implementation of CPU architecture with hazard detection units. No memory hierarchy in this folder to understand design better.
 ### 3. [Pipeline + Hazard + Branch Prediction](https://github.com/memreduman/Computer-Architecture/tree/f8724b89704a7129f5d8ef398e818a6342597d57/pipeline_hazard_BTB)
-I am still organizing this folder DO NOT USE!
+This folder describes the implementation of 2-bit Dynamic Branch Prediction
 ### 4. [Pipeline + Memory](https://github.com/memreduman/Computer-Architecture/tree/main/Pipeline_Memory)
 This folder describes the implementation of CPU architecture with hazard detection units and memory hierarchy.
 I am still organizing this folder DO NOT USE!
