@@ -7,7 +7,7 @@ First of all, the design has its own Instruction Set Architecture(ISA) based on 
 It is developed an assembler for M2Y Instruction Set written in C++. The program takes assembly code as an input and produces hex code for the CPU's instruction memory.
 ### 2. [Pipeline + Hazard](https://github.com/memreduman/Computer-Architecture/tree/main/Pipeline_Hazard_NoMemory)
 This folder describes the implementation of CPU architecture with hazard detection units. No memory hierarchy in this folder to understand design better.
-### 3. [Pipeline + Hazard + Branch Prediction](https://github.com/memreduman/Computer-Architecture/tree/f8724b89704a7129f5d8ef398e818a6342597d57/pipeline_hazard_BTB)
+### 3. [Pipeline + Hazard + Branch Prediction](https://github.com/memreduman/Computer-Architecture/tree/601435d0fce4a356e21fd74214581ac0db248a9a/pipeline_hazard_BTB)
 This folder describes the implementation of 2-bit Dynamic Branch Prediction
 ### 4. [Pipeline + Memory](https://github.com/memreduman/Computer-Architecture/tree/main/Pipeline_Memory)
 This folder describes the implementation of CPU architecture with hazard detection units and memory hierarchy.
